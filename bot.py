@@ -1,26 +1,24 @@
 import os, sys
-import pytumblr
+import re
+import tweepy
 import praw
 
 from derw import log
 
-# Tumblr
-CONSUMER_KEY = os.environ.get("CONSUMER_KEY")
+# Twitter
+CONSUMER_TOKEN = os.environ.get("CONSUMER_TOKEN")
 CONSUMER_SECRET = os.environ.get("CONSUMER_SECRET")
-OAUTH_TOKEN = os.environ.get("OAUTH_TOKEN")
-OAUTH_SECRET = os.environ.get("OAUTH_SECRET")
+ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
+ACCESS_TOKEN_SECRET = os.environ.get("ACCESS_TOKEN_SECRET")
 
 # Reddit
 SUBREDDIT = os.environ.get("SUBREDDIT")
 
-client = pytumblr.TumblrRestClient(
-    CONSUMER_KEY,
-    CONSUMER_SECRET,
-    OAUTH_TOKEN,
-    OAUTH_SECRET
-)
+auth = tweepy.OAuthHandler(CONSUMER_TOKEN, CONSUMER_SECRET)
+auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+twitter = tweepy.API(auth)
 
-log.debug(f'Successfully logged into tumblr as {client.info()["user"]["name"]}')
+log.debug(f'Successfully logged into twitter as @{twitter.me().screen_name}')
 
 r = praw.Reddit('RenegadeAI', user_agent='/r/beeple')
 log.debug(f'Successfully logged into reddit as {r.user.me()}')
@@ -32,19 +30,23 @@ if os.path.isfile(LAST_POST_FILE):
 else:
     LAST_POST = 0
 
-posts = client.posts('beeple.tumblr.com', type='photo', limit=5).get('posts')
-for post in reversed(posts):
-    if 'photos' in post:
-        id = post.get("id")
-        title = post.get("summary")
-        url = post.get("photos")[0]["original_size"]["url"]
+re_title = re.compile("([A-Z]{1,}[\s\W])")
 
-        if id > LAST_POST:
+tweets = twitter.user_timeline('beeple', count=10)
+for tweet in reversed(tweets):
+    if "everyday" in [ht['text'] for ht in tweet.entities['hashtags']]:
+        title = ''.join(re.findall(re_title, tweet.text)).strip()
+        url = tweet.entities['media'][0]['media_url_https']
+
+        if tweet.id > LAST_POST:
             try:
                 submission = r.subreddit(SUBREDDIT).submit(title, url=url, flair_id='8c1b7e86-e96b-11e8-852f-0e6f8368cab6', resubmit=False)
                 submission.mod.approve()
 
                 log.info(f'Submitted {title} {submission.shortlink}')
+
+                LAST_POST = tweet.id
+
                 break
 
             except praw.exceptions.APIException as e:
@@ -58,8 +60,6 @@ for post in reversed(posts):
             except Exception as e:
                 log.critical(e)
                 break
-
-            LAST_POST = id
 
 with open(LAST_POST_FILE, 'w+') as f:
     f.write(f'{LAST_POST}')

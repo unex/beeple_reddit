@@ -7,8 +7,8 @@ verify_ssl = true
 
 [packages]
 praw = "*"
-pytumblr = "*"
 derw = {git = "https://github.com/notderw/python-util"}
+tweepy = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
