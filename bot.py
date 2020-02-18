@@ -36,7 +36,7 @@ tweets = twitter.user_timeline('beeple', count=10)
 for tweet in reversed(tweets):
     if "everyday" in [ht['text'] for ht in tweet.entities['hashtags']]:
         title = ''.join(re.findall(re_title, tweet.text)).strip()
-        url = tweet.entities['media'][0]['media_url_https']
+        url = tweet.entities['media'][0]['media_url_https'] + "?name=orig"
 
         if tweet.id > LAST_POST:
             try:
