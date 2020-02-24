@@ -30,11 +30,12 @@ if os.path.isfile(LAST_POST_FILE):
 else:
     LAST_POST = 0
 
+re_tag = re.compile("everyday(s)?")
 re_title = re.compile("([A-Z]{1,}[\s\W])")
 
 tweets = twitter.user_timeline('beeple', count=10)
 for tweet in reversed(tweets):
-    if "everyday" in [ht['text'] for ht in tweet.entities['hashtags']]:
+    if list(filter(re_tag.match, [ht['text'] for ht in tweet.entities['hashtags']])):
         title = ''.join(re.findall(re_title, tweet.text)).strip()
         url = tweet.entities['media'][0]['media_url_https'] + "?name=orig"
 
