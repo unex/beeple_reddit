@@ -31,7 +31,7 @@ else:
     LAST_POST = 0
 
 re_tag = re.compile("everyday(s)?")
-re_title = re.compile("([A-Z]{1,}[\s\W])")
+re_title = re.compile("([A-Z]{1,}[\s\W]\s?)")
 
 tweets = twitter.user_timeline('beeple', count=10)
 for tweet in reversed(tweets):
