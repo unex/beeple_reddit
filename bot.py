@@ -30,13 +30,14 @@ if os.path.isfile(LAST_POST_FILE):
 else:
     LAST_POST = 0
 
-re_tag = re.compile("everyday(s)?")
+re_tags = re.compile("everyday(s)?", re.IGNORECASE)
+re_hashtag = re.compile("#\w+")
 re_title = re.compile("([A-Z]{1,}[\s\W]\s?)")
 
 tweets = twitter.user_timeline('beeple', count=10)
 for tweet in reversed(tweets):
-    if list(filter(re_tag.match, [ht['text'] for ht in tweet.entities['hashtags']])):
-        title = ''.join(re.findall(re_title, tweet.text)).strip()
+    if list(filter(re_tags.match, [ht['text'] for ht in tweet.entities['hashtags']])):
+        title = ''.join(re.findall(re_title, re_hashtag.sub("", tweet.text))).strip()
         url = tweet.entities['media'][0]['media_url_https'] + "?name=orig"
 
         if tweet.id > LAST_POST:
